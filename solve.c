@@ -7,9 +7,9 @@ int main(int argc, char * argv[]){
         printf("Error en los parametros");
     }
 
-    masterADT masterOfPuppets = newMaster(argc-1,argv[1]);
+    masterADT master = newMaster(argc-1,argv[1]);
 
-    
+
 
 
 }
