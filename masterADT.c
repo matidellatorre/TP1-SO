@@ -29,14 +29,29 @@ masterADT newMaster(int filecount, const char**filenames){
 void initializeSlaves(masterADT master){
 
     int slaveCount = 0;
+    pid_t forkRes;
+ 
     while(slaveCount<MAX_SLAVES && slaveCount<master->filecount){
         pipe(master->sendPipes[slaveCount]);
         pipe(master->receivePipes[slaveCount]);
-        pid_t forkRes;
+
         if ((forkRes=fork())<0){
             //Error
         } else if(forkRes==0){
-            //Hijo 
+            //Hijo
+            for (int i = 0; i < slaveCount; i++) {
+              close(master->sendPipes[slaveCount][1]);
+              close(master->receivePipes[slaveCount][0]);
+            }
+
+            close(master->sendPipes[slaveCount][1]);
+            close(master->receivePipes[slaveCount][0]);
+          
+            dup2(master->receivePipes[slaveCount][1], STDOUT_FILENO);
+            dup2(master->sendPipes[slaveCount][0],STDIN_FILENO);
+
+            
+      
         } else {
             //Padre
             master->slavePids[slaveCount]=forkRes;
