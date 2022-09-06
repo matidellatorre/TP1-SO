@@ -12,7 +12,8 @@ typedef struct masterCDT {
     int receivePipes[MAX_SLAVES][2];
     int resultFd;
     pid_t slavePids[MAX_SLAVES];
-    //falta shared memory
+    //Shared memory
+    
 } masterCDT;
 
 masterADT newMaster(int filecount, const char**filenames){
