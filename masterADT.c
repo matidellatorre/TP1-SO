@@ -5,6 +5,8 @@
 
 #define MAX_SLAVES 5
 #define ANS_PATH "./result.txt"
+#define MAX_LEN 256
+#define MAX_FILES_PER_SLAVE 2
 
 typedef struct masterCDT {
     int filecount;
@@ -81,7 +83,7 @@ void sendInitialTask(masterADT master){
   int taskNum = 0;
 
   for(int i = 0; i < master->activeSlaves;i++){
-    for (int j = 0; j < 1 && taskNum < master->filecount; j++) {
+    for (int j = 0; j < MAX_FILES_PER_SLAVE && taskNum < master->filecount; j++) {
       
       giveTask(master->sendPipes[i][1], master->filenames[taskNum]);
       taskNum++;
@@ -108,7 +110,31 @@ void monitorSlaves(masterADT master){
         if(select(master->receivePipes[master->activeSlaves-1][0]+1,&readFds,NULL,NULL,NULL) == -1){
             perror("select");
         } else {
-            //manageResult(master);
+            manageResult(master, &taskFinished, resultsFile, readFds);
+        }
+    }
+    if(fclose(resultsFile) == EOF){
+        perror("fclose");
+    }
+}
+
+void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set readFds){
+    for(int i=0; i<master->activeSlaves; i++){
+        if(!FD_ISSET(master->receivePipes[i][0], &readFds)){
+            (*taskFinished)++;
+            char buff[MAX_LEN];
+            int bytesRead = read(master->receivePipes[i][0], buff, MAX_LEN);
+            if(bytesRead == -1){
+                perror("read");
+            }
+            buff[bytesRead]='\0';
+            if(fwrite(buff, sizeof(char),bytesRead, resultFile) == 0){
+                perror("fwrite");
+            }
+        }
+        //Se puede mover, esta parte de la funcion asigna la nueva tarea
+        if(*taskFinished < master->filecount){
+            giveTask(master->sendPipes[i][1], master->filenames[master->currentTask++]);
         }
     }
 }
