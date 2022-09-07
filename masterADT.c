@@ -10,7 +10,7 @@ typedef struct masterCDT {
     int activeSlaves;
     int sendPipes[MAX_SLAVES][2];
     int receivePipes[MAX_SLAVES][2];
-    int currentTask;
+    int currentTask; //Marca la posicion en el vector de tareas
     pid_t slavePids[MAX_SLAVES];
     //Shared memory
     
@@ -19,8 +19,7 @@ typedef struct masterCDT {
 masterADT newMaster(int filecount, const char**filenames){
     masterADT newMaster = calloc(1,sizeof(masterCDT));
     if (newMaster==NULL){
-        //Handeleo de error de malloc
-        //TO DO: #Gaston Alasia
+        perror("NewMaster Memory allocation failure\n");
     }
     newMaster->filecount = filecount;
     newMaster->filenames = filenames;
@@ -51,31 +50,24 @@ void initializeSlaves(masterADT master){
             dup2(master->receivePipes[slaveCount][1], STDOUT_FILENO);
             dup2(master->sendPipes[slaveCount][0],STDIN_FILENO);
 
-            
-      
+            execv("slave.bin", NULL);
         } else {
             //Padre
             master->slavePids[slaveCount]=forkRes;
             close(master->sendPipes[slaveCount][0]);
             close(master->receivePipes[slaveCount][1]);
             slaveCount++;
-        }
-
-
-        
+        }   
     }
-
   master->activeSlaves = slaveCount;
 }
 
-void giveTask(int endPipe,const char * file){
-
+static void giveTask(int endPipe,const char * file){
   write(endPipe, file, sizeof(file));
-
+  write(endPipe, "\n", 1);
 }
 
-void sendInitialFiles(masterADT master){
-
+void sendInitialTask(masterADT master){
   int taskNum = 0;
 
   for(int i = 0; i < master->activeSlaves;i++){
@@ -84,11 +76,8 @@ void sendInitialFiles(masterADT master){
       giveTask(master->sendPipes[i][1], master->filenames[taskNum]);
       taskNum++;
     }
-
   }
-  
   master->currentTask = taskNum;
-
 }
 
 

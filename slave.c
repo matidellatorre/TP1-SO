@@ -21,5 +21,11 @@ char * computeHash(const char * filename){
 }
 
 int main(int argc, char * argv[]){
-
+    char *line = NULL; //Después hay que hacer un free de esto
+    size_t lenght = 0;
+    if(getline(&line, &lenght, stdin) == -1){
+        perror("getline failure\n");
+    }
+    
+    free(line);
 }

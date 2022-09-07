@@ -13,7 +13,7 @@ typedef struct shmCDT{
     int fd;
 }shmCDT;
 
-shmADT newMaster(int filecount, const char**filenames){
+shmADT newShm(void){
     shmADT newMaster = calloc(1,sizeof(shmADT));
     if (newMaster==NULL){
         //Handeleo de error de malloc

@@ -4,6 +4,8 @@
 
 typedef struct shmCDT * shmADT;
 
-shmADT newMaster(int filecount, const char**filenames);
+shmADT newShm(void);
+void createShm(shmADT shm);
+void *mapShm(shmADT shm, int mode);
 
 #endif
