@@ -4,7 +4,7 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <unistd.h>
 #include <sys/types.h>
-#include "shmADT.h"
+#include "include/shmADT.h"
 
 #define SHM_NAME "/myshm"
 #define SHM_SIZE 1024

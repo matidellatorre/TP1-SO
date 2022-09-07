@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
-#include "masterADT.h"
+#include "include/masterADT.h"
 
 #define MAX_SLAVES 5
 
