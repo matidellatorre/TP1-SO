@@ -17,7 +17,7 @@ shmADT newShm(void){
     shmADT newMaster = calloc(1,sizeof(shmADT));
     if (newMaster==NULL){
         //Handeleo de error de malloc
-        //TODO: #Gaston Alasia
+        //TODO: @Gaston Alasia
     }
     return newMaster;
 }

@@ -53,18 +53,9 @@ void printHashWithFormat(const char * hash, const char * filename){
     pid_t pid = getpid();
     char resultToPrint[MAX_LEN];
     int resultLen;
-    resultLen = sprintf(resultToPrint,"File: %s Hash: %s Slave PID: %d",filename,hash,pid);
+    resultLen = sprintf(resultToPrint,"File: %s Hash: %s Slave PID: %d\n",filename,hash,pid);
     if (resultLen<0){
         perror("sprintf");
     }
     write(STDOUT_FILENO,resultToPrint,resultLen);
 }
-
-/*
-hola.txt e9aea3571d18e099b6295afd19487489 pid:5
-hola.txt e9aea3571d18e099b6295afd19487489 pid:5
-hola.txt e9aea3571d18e099b6295afd19487489 pid:5
-chau.txt file doesnt exist
-hola.txt e9aea3571d18e099b6295afd19487489 pid:5
-hola.txt e9aea3571d18e099b6295afd19487489 pid:5
-*/

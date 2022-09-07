@@ -1,4 +1,4 @@
-BINARY=bin 
+BINARY=solve 
 CODEDIRS=.
 INCDIRS=. ./include/
 
