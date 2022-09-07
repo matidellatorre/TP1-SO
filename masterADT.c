@@ -1,6 +1,10 @@
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <string.h>
 #include "include/masterADT.h"
 
 #define MAX_SLAVES 5
@@ -10,7 +14,7 @@
 
 typedef struct masterCDT {
     int filecount;
-    char ** filenames;
+    const char ** filenames;
     int activeSlaves;
     int sendPipes[MAX_SLAVES][2];
     int receivePipes[MAX_SLAVES][2];
@@ -19,6 +23,8 @@ typedef struct masterCDT {
     //Shared memory
     
 } masterCDT;
+
+void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set readFds);
 
 masterADT newMaster(int filecount, const char**filenames){
     masterADT newMaster = calloc(1,sizeof(masterCDT));
@@ -40,7 +46,7 @@ void initializeSlaves(masterADT master){
         pipe(master->receivePipes[slaveCount]);
 
         if ((forkRes=fork())<0){
-            //Error
+            perror("fork");
         } else if(forkRes==0){
             //Hijo
             for (int i = 0; i < slaveCount; i++) {
@@ -54,12 +60,15 @@ void initializeSlaves(masterADT master){
             dup2(master->receivePipes[slaveCount][1], STDOUT_FILENO);
             dup2(master->sendPipes[slaveCount][0],STDIN_FILENO);
 
-            execv("slave.out",NULL);
+            close(master->sendPipes[slaveCount][1]);
+            close(master->receivePipes[slaveCount][0]);
+
+            char * args[] = {"slave",NULL};
+            execv(args[0],args);
 
             perror("execv");            
       
         } else {
-            //Padre
             master->slavePids[slaveCount]=forkRes;
             close(master->sendPipes[slaveCount][0]);
             close(master->receivePipes[slaveCount][1]);
@@ -73,7 +82,7 @@ void initializeSlaves(masterADT master){
 
 void giveTask(int endPipe,const char * file){
 
-  write(endPipe, file, sizeof(file));
+  write(endPipe, file, strlen(file));
   write(endPipe, "\n", 1);
 
 }
@@ -120,7 +129,7 @@ void monitorSlaves(masterADT master){
 
 void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set readFds){
     for(int i=0; i<master->activeSlaves; i++){
-        if(!FD_ISSET(master->receivePipes[i][0], &readFds)){
+        if(FD_ISSET(master->receivePipes[i][0], &readFds)){
             (*taskFinished)++;
             char buff[MAX_LEN];
             int bytesRead = read(master->receivePipes[i][0], buff, MAX_LEN);
@@ -128,15 +137,32 @@ void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set
                 perror("read");
             }
             buff[bytesRead]='\0';
+
             if(fwrite(buff, sizeof(char),bytesRead, resultFile) == 0){
                 perror("fwrite");
             }
         }
         //Se puede mover, esta parte de la funcion asigna la nueva tarea
-        if(*taskFinished < master->filecount){
-            giveTask(master->sendPipes[i][1], master->filenames[master->currentTask++]);
+        if(master->currentTask < master->filecount){
+            giveTask(master->sendPipes[i][1], master->filenames[(master->currentTask)++]);
         }
     }
+}
+
+void closePipes(masterADT master){
+    for(int i=0; i<master->activeSlaves; i++){
+        close(master->sendPipes[i][1]);
+        close(master->receivePipes[i][0]);
+    }
+}
+
+void freeMaster(masterADT master){
+    free(master);
+}
+
+void freeAllResources(masterADT master){
+    closePipes(master);
+    freeMaster(master);
 }
 
 
