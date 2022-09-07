@@ -1,31 +1,70 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 
-char * computeHash(const char * filename){
+#define HASH_LEN 33
+#define MAX_LEN 256
 
-    char buffer[256];
 
-    sprintf(buffer,"md5sum %s",filename);
+void printHashWithFormat(const char * hash, const char * filename);
 
-    FILE * file = popen(buffer,"r");
+void computeHash(char * buffer, const char * filename){
 
-    int readBytes = fread(buffer, sizeof(char),256,file);
+    if (sprintf(buffer,"md5sum %s",filename)<0){
+        perror("sprintf");
+    }
 
-    buffer[readBytes]=0;
+    FILE * file;
+    if ((file = popen(buffer,"r")) == NULL){
+        perror("popen");
+        // Hay que hacer algo aca, a decidir
+    }
+    
+    fread(buffer, sizeof(char),MAX_LEN,file);
+
+    buffer[HASH_LEN-1]=0;
 
     //e9aea3571d18e099b6295afd19487489
     
-    //printf("%s",buffer);
-    pclose(file);
+    if (pclose(file) == -1){
+        perror("pclose");
+        //Posible exit, a decidir. Capaz no vale pena seguir procesando archivos.
+    }
 
-    return buffer;
 }
 
 int main(int argc, char * argv[]){
-    char *line = NULL; //Después hay que hacer un free de esto
+
+    char hash[MAX_LEN];
+    char * filename = NULL; //Después hay que hacer un free de esto
     size_t lenght = 0;
-    if(getline(&line, &lenght, stdin) == -1){
-        perror("getline failure\n");
+    ssize_t charsRead;
+    while((charsRead = getline(&filename, &lenght, STDIN_FILENO)) > 0){
+        filename[charsRead-1]=0;
+        computeHash(hash,filename);
+        printHashWithFormat(hash,filename);
     }
-    
-    free(line);
+    free(filename);
+    return 0;
 }
+
+void printHashWithFormat(const char * hash, const char * filename){
+    pid_t pid = getpid();
+    char resultToPrint[MAX_LEN];
+    int resultLen;
+    resultLen = sprintf(resultToPrint,"File: %s Hash: %s Slave PID: %d",filename,hash,pid);
+    if (resultLen<0){
+        perror("sprintf");
+    }
+    write(STDOUT_FILENO,resultToPrint,resultLen);
+}
+
+/*
+hola.txt e9aea3571d18e099b6295afd19487489 pid:5
+hola.txt e9aea3571d18e099b6295afd19487489 pid:5
+hola.txt e9aea3571d18e099b6295afd19487489 pid:5
+chau.txt file doesnt exist
+hola.txt e9aea3571d18e099b6295afd19487489 pid:5
+hola.txt e9aea3571d18e099b6295afd19487489 pid:5
+*/

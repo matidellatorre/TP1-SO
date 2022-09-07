@@ -4,3 +4,6 @@
 *.o
 *.exe
 .bash_history
+.bashrc
+slave
+*.220
