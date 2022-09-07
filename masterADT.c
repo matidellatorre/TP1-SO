@@ -10,7 +10,7 @@ typedef struct masterCDT {
     int activeSlaves;
     int sendPipes[MAX_SLAVES][2];
     int receivePipes[MAX_SLAVES][2];
-    int resultFd;
+    int currentTask;
     pid_t slavePids[MAX_SLAVES];
     //Shared memory
     
@@ -56,10 +56,39 @@ void initializeSlaves(masterADT master){
         } else {
             //Padre
             master->slavePids[slaveCount]=forkRes;
+            close(master->sendPipes[slaveCount][0]);
+            close(master->receivePipes[slaveCount][1]);
+            slaveCount++;
         }
 
 
         
     }
 
+  master->activeSlaves = slaveCount;
 }
+
+void giveTask(int endPipe,const char * file){
+
+  write(endPipe, file, sizeof(file));
+
+}
+
+void sendInitialFiles(masterADT master){
+
+  int taskNum = 0;
+
+  for(int i = 0; i < master->activeSlaves;i++){
+    for (int j = 0; j < 1 && taskNum < master->filecount; j++) {
+      
+      giveTask(master->sendPipes[i][1], master->filenames[taskNum]);
+      taskNum++;
+    }
+
+  }
+  
+  master->currentTask = taskNum;
+
+}
+
+
