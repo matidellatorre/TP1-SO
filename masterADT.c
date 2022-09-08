@@ -60,8 +60,9 @@ void initializeSlaves(masterADT master){
             dup2(master->receivePipes[slaveCount][1], STDOUT_FILENO);
             dup2(master->sendPipes[slaveCount][0],STDIN_FILENO);
 
-            close(master->sendPipes[slaveCount][1]);
-            close(master->receivePipes[slaveCount][0]);
+            close(master->receivePipes[slaveCount][1]);
+            close(master->sendPipes[slaveCount][0]);
+            
 
             char * args[] = {"slave",NULL};
             execv(args[0],args);

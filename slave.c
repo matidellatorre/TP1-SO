@@ -1,7 +1,10 @@
-#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+
+#include <stdio.h>
 
 #define HASH_LEN 33
 #define MAX_LEN 256
@@ -40,7 +43,7 @@ int main(int argc, char * argv[]){
     char * filename = NULL; //Después hay que hacer un free de esto
     size_t lenght = 0;
     ssize_t charsRead;
-    while((charsRead = getline(&filename, &lenght, STDIN_FILENO)) > 0){
+    while((charsRead = getline(&filename, &lenght, stdin)) > 0){
         filename[charsRead-1]=0;
         computeHash(hash,filename);
         printHashWithFormat(hash,filename);
