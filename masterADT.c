@@ -166,4 +166,3 @@ void freeAllResources(masterADT master){
     freeMaster(master);
 }
 
-

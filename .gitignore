@@ -10,3 +10,4 @@ slave
 .vscode/settings.json
 vgcore.*
 solve
+test/script.sh

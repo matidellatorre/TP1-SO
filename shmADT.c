@@ -1,16 +1,22 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>        /* For mode constants */
 #include <fcntl.h>           /* For O_* constants */
 #include <unistd.h>
 #include <sys/types.h>
+#include <semaphore.h>
 #include "include/shmADT.h"
 
 #define SHM_NAME "/myshm"
 #define SHM_SIZE 1024
+#define SHARED 0
+#define INITIAL_SEM 1
 
 typedef struct shmCDT{
     int fd;
+    ssize_t writeIdx, readIdx;
+    sem_t sem;
 }shmCDT;
 
 shmADT newShm(void){
@@ -27,11 +33,18 @@ void createShm(shmADT shm){
     shm->fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if(shm->fd == -1){
         perror("shm_open");
+        exit(EXIT_FAILURE);
     }
 
     //le asignamos tamaño de memoria
     if(ftruncate(shm->fd, SHM_SIZE) != 0){
         perror("ftruncate");
+        exit(EXIT_FAILURE);
+    }
+
+    if(sem_init(&(shm->sem), SHARED, INITIAL_SEM) == -1){
+        perror("sem_init");
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -43,4 +56,19 @@ void *mapShm(shmADT shm, int mode){
         perror("mmap");
     }
     return res;
+}
+
+void writeToShm(shmADT shm, const char* input){
+    int lenght = strlen(input);
+    ssize_t count = write(shm->fd, input, lenght);
+    if(count < lenght){     //En caso de error write devuelve -1, si no se llega a escribir todo el input quiere decir que también se produjo un error
+        perror("writeToShm");
+        exit(EXIT_FAILURE);
+    }
+    shm->writeIdx += count;
+}
+
+void readFromShm(shmADT shm, char**output){
+    
+    getline();
 }
