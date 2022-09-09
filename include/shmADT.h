@@ -4,9 +4,9 @@
 
 typedef struct shmCDT * shmADT;
 
-shmADT newShm(char* shmName);
+shmADT newShm(char* shmName, char mode);
 void openShm(shmADT shm);
-void mapShm(shmADT shm, char mode);
+void mapShm(shmADT shm);
 void writeToShm(shmADT shm, const char* input);
 size_t readFromShm(shmADT shm, char* output);
 void freeResources(shmADT shm);

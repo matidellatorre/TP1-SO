@@ -35,14 +35,13 @@ masterADT newMaster(int filecount, const char**filenames){
     }
     newMaster->filecount = filecount;
     newMaster->filenames = filenames;
-    newMaster->sharedMemory = newShm(SHM_NAME);
+    newMaster->sharedMemory = newShm(SHM_NAME, 'w');
     openShm(newMaster->sharedMemory);
-    mapShm(newMaster->sharedMemory, 'w');
+    mapShm(newMaster->sharedMemory);
     return newMaster;
 }
 
 void initializeSlaves(masterADT master){
-
     int slaveCount = 0;
     pid_t forkRes;
     while(slaveCount<MAX_SLAVES && slaveCount<master->filecount){
@@ -149,7 +148,6 @@ void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set
             }
 
             //Escribo lo mismo en shared memory
-            printf("%d\n",strlen(buff));
             writeToShm(master->sharedMemory, buff);
 
         }

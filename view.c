@@ -32,15 +32,15 @@ int main(int argc, char * argv[]){
         }
     }
     
-    shmADT sharedMemory = newShm("/myshm");
+    shmADT sharedMemory = newShm("/myshm", 'r');
     openShm(sharedMemory);
-    mapShm(sharedMemory, 'r');
+    mapShm(sharedMemory);
 
     sleep(2);
     char buf[256];
     readFromShm(sharedMemory, buf);
     printf("%s\n", buf);
-    freeResources(sharedMemory);
+    //freeResources(sharedMemory);
     return 0;
 
 }
