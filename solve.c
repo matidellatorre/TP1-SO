@@ -14,7 +14,6 @@ int main(int argc, const char * argv[]){
 
 
     masterADT masterOfPuppets = newMaster(argc-1,argv+1);
-
     initializeSlaves(masterOfPuppets);
 
     sendInitialTask(masterOfPuppets);

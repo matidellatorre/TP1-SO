@@ -45,7 +45,6 @@ void initializeSlaves(masterADT master){
 
     int slaveCount = 0;
     pid_t forkRes;
- 
     while(slaveCount<MAX_SLAVES && slaveCount<master->filecount){
         pipe(master->sendPipes[slaveCount]);
         pipe(master->receivePipes[slaveCount]);
@@ -165,12 +164,9 @@ void closePipes(masterADT master){
     }
 }
 
-void freeMaster(masterADT master){
-    free(master);
-}
-
 void freeAllResources(masterADT master){
     closePipes(master);
-    freeMaster(master);
+    freeResources(master->sharedMemory);
+    free(master);
 }
 

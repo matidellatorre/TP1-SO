@@ -23,6 +23,7 @@ typedef struct shmCDT{
     void * current;
     void * ptr; //first position in shared memory
     char * name;
+    char mode;
 }shmCDT;
 
 shmADT newShm(char* shmName){
@@ -57,6 +58,8 @@ void openShm(shmADT shm){
 
 //when mode is set to 1, shared memory is mapped in write mode, and read mode when 0
 void mapShm(shmADT shm, char mode){
+    shm->mode = mode;
+    printf("%c\n", shm->mode);
     int permission = mode=='w'?PROT_WRITE:mode=='r'?PROT_READ:PROT_NONE;
     void *res = mmap(NULL, SHM_SIZE, permission, MAP_SHARED,shm->fd, 0);
     if(res == MAP_FAILED){
@@ -94,13 +97,16 @@ size_t readFromShm(shmADT shm, char* output){
 }
 
 void freeResources(shmADT shm){
+    printf("%c\n", shm->mode);
     if(munmap(shm->ptr, SHM_SIZE)==-1){
         perror("munmap");
         exit(EXIT_FAILURE);
     }
-    if(shm_unlink(shm->name)==-1){
-        perror("shm_unlink");
-        exit(EXIT_FAILURE);
+    if(shm->mode != 'r'){
+        if(shm_unlink(shm->name)==-1){
+            perror("shm_unlink");
+            exit(EXIT_FAILURE);
+        }
     }
     if(close(shm->fd)==-1){
         perror("close");
