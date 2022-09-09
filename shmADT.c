@@ -7,32 +7,37 @@
 #include <sys/types.h>
 #include <semaphore.h>
 #include <string.h>
-#include "include/shmADT.h"
+#include <sys/mman.h>
+#include <sys/stat.h>        /* For mode constants */
+#include <fcntl.h>
+#include "./include/shmADT.h"
 
-#define SHM_NAME "/myshm"
 #define SHM_SIZE 1024
 #define SHARED 0
 #define INITIAL_SEM 1
 
 typedef struct shmCDT{
     int fd;
-    ssize_t writeIdx, readIdx;
+    size_t writeIdx, readIdx;
     sem_t sem;
-    void * ptr;
+    void * current;
+    void * ptr; //first position in shared memory
+    char * name;
 }shmCDT;
 
-shmADT newShm(void){
+shmADT newShm(char* shmName){
     shmADT newMaster = calloc(1,sizeof(shmADT));
     if (newMaster==NULL){
-        //Handeleo de error de malloc
-        //TODO: @Gaston Alasia
+        perror("newMaster");
+        exit(EXIT_FAILURE);
     }
+    newMaster->name = shmName;
     return newMaster;
 }
 
-void createShm(shmADT shm){
+void openShm(shmADT shm){
     //creamos el shared memory object vacío
-    shm->fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    shm->fd = shm_open(shm->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if(shm->fd == -1){
         perror("shm_open");
         exit(EXIT_FAILURE);
@@ -44,36 +49,64 @@ void createShm(shmADT shm){
         exit(EXIT_FAILURE);
     }
 
-    if(sem_init(&(shm->sem), SHARED, INITIAL_SEM) == -1){
+    /*if(sem_init(&(shm->sem), SHARED, INITIAL_SEM) == -1){
         perror("sem_init");
         exit(EXIT_FAILURE);
-    }
+    }*/
 }
 
 //when mode is set to 1, shared memory is mapped in write mode, and read mode when 0
-void *mapShm(shmADT shm, int mode){
-    int permission = mode?PROT_WRITE:PROT_READ;
+void mapShm(shmADT shm, char mode){
+    int permission = mode=='w'?PROT_WRITE:mode=='r'?PROT_READ:PROT_NONE;
     void *res = mmap(NULL, SHM_SIZE, permission, MAP_SHARED,shm->fd, 0);
     if(res == MAP_FAILED){
         perror("mmap");
     }
     shm->ptr = res;
-    return res;
+    shm->current = res;
 }
 
 void writeToShm(shmADT shm, const char* input){
     int lenght = strlen(input);
-    if(shm->ptr==NULL){
+    if(shm->current==NULL){
         perror("mapShm should be called first");
         exit(EXIT_FAILURE);
     }
-    int * firstPos = (int*)shm->ptr;
+    int * firstPos = (int*)shm->current;
     *firstPos = lenght;
-    shm->ptr+=sizeof(int);
-    sprintf(shm->ptr, "%s", input);
-    shm->ptr+=lenght;
+    shm->current+=sizeof(int);
+    sprintf(shm->current, "%s", input);
+    shm->current+=lenght;
+    return;
 }
 
-void readFromShm(shmADT shm, char**output){
-    
+size_t readFromShm(shmADT shm, char* output){
+    size_t lenght = *((int*)shm->current);
+    shm->current+=sizeof(int);
+
+    if(snprintf(*output, lenght, "%s", shm->current)<0){
+        perror("sprintf");
+        exit(EXIT_FAILURE);
+    }
+
+    shm->current+=lenght;
+    return lenght;
 }
+
+void freeResources(shmADT shm){
+    if(munmap(shm->ptr, SHM_SIZE)==-1){
+        perror("munmap");
+        exit(EXIT_FAILURE);
+    }
+    if(shm_unlink(shm->name)==-1){
+        perror("shm_unlink");
+        exit(EXIT_FAILURE);
+    }
+    if(close(shm->fd)==-1){
+        perror("close");
+        exit(EXIT_FAILURE);
+    }
+    free(shm);
+    return;
+}
+

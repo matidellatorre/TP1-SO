@@ -8,6 +8,7 @@
 #include "./include/masterADT.h"
 #include "./include/shmADT.h"
 
+#define SHM_NAME "/myshm"
 #define MAX_SLAVES 5
 #define ANS_PATH "./result.txt"
 #define MAX_LEN 256
@@ -34,6 +35,9 @@ masterADT newMaster(int filecount, const char**filenames){
     }
     newMaster->filecount = filecount;
     newMaster->filenames = filenames;
+    newMaster->sharedMemory = newShm(SHM_NAME);
+    openShm(newMaster->sharedMemory);
+    mapShm(newMaster->sharedMemory, 'w');
     return newMaster;
 }
 
@@ -90,12 +94,6 @@ void giveTask(int endPipe,const char * file){
 }
 
 void sendInitialTask(masterADT master){
-
-    //Shared memory
-    master->sharedMemory = newShm();
-    createShm(master->sharedMemory);
-    mapShm(master->sharedMemory, 1);
-
   int taskNum = 0;
 
   for(int i = 0; i < master->activeSlaves;i++){
