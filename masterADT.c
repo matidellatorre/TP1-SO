@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
-#include "include/masterADT.h"
+#include "./include/masterADT.h"
+#include "./include/shmADT.h"
 
 #define MAX_SLAVES 5
 #define ANS_PATH "./result.txt"
@@ -20,7 +21,7 @@ typedef struct masterCDT {
     int receivePipes[MAX_SLAVES][2];
     int currentTask;
     pid_t slavePids[MAX_SLAVES];
-    //Shared memory
+    shmADT sharedMemory;
     
 } masterCDT;
 
@@ -90,6 +91,11 @@ void giveTask(int endPipe,const char * file){
 
 void sendInitialTask(masterADT master){
 
+    //Shared memory
+    master->sharedMemory = newShm();
+    createShm(master->sharedMemory);
+    mapShm(master->sharedMemory, 1);
+
   int taskNum = 0;
 
   for(int i = 0; i < master->activeSlaves;i++){
@@ -142,6 +148,10 @@ void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set
             if(fwrite(buff, sizeof(char),bytesRead, resultFile) == 0){
                 perror("fwrite");
             }
+
+            //Escribo lo mismo en shared memory
+            writeToShm(master->sharedMemory,buff);
+
         }
         //Se puede mover, esta parte de la funcion asigna la nueva tarea
         if(master->currentTask < master->filecount){

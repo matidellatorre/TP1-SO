@@ -4,8 +4,8 @@ CODEDIRS=.
 INCDIRS=. ./include/
 
 CC=gcc
-CFLAGS= -Wall -g -std=c99 -D_GNU_SOURCE -pthread 
-CFILES = solve.c masterADT.c  #faltan view.c, slave.c shmADT.c
+CFLAGS= -Wall -g -std=c99 -D_GNU_SOURCE -pthread -lrt
+CFILES = solve.c masterADT.c shmADT.c
 OBJECTS=$(patsubst %.c,%.o,$(CFILES)) #Este pattern substitution hace que por cada elemento en la lista de CFILES, que tome solo los que matchean .c (van a ser todos) y los convierta en .o. O sea que busqué los .o donde estaban sus respectivos .o
 
 all: $(BINARY) $(SLAVE_BINARY)

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <semaphore.h>
+#include <string.h>
 #include "include/shmADT.h"
 
 #define SHM_NAME "/myshm"
@@ -17,6 +18,7 @@ typedef struct shmCDT{
     int fd;
     ssize_t writeIdx, readIdx;
     sem_t sem;
+    void * ptr;
 }shmCDT;
 
 shmADT newShm(void){
@@ -55,20 +57,23 @@ void *mapShm(shmADT shm, int mode){
     if(res == MAP_FAILED){
         perror("mmap");
     }
+    shm->ptr = res;
     return res;
 }
 
 void writeToShm(shmADT shm, const char* input){
     int lenght = strlen(input);
-    ssize_t count = write(shm->fd, input, lenght);
-    if(count < lenght){     //En caso de error write devuelve -1, si no se llega a escribir todo el input quiere decir que también se produjo un error
-        perror("writeToShm");
+    if(shm->ptr==NULL){
+        perror("mapShm should be called first");
         exit(EXIT_FAILURE);
     }
-    shm->writeIdx += count;
+    int * firstPos = (int*)shm->ptr;
+    *firstPos = lenght;
+    shm->ptr+=sizeof(int);
+    sprintf(shm->ptr, "%s", input);
+    shm->ptr+=lenght;
 }
 
 void readFromShm(shmADT shm, char**output){
     
-    getline();
 }
