@@ -10,4 +10,5 @@ void mapShm(shmADT shm, char mode);
 void writeToShm(shmADT shm, const char* input);
 size_t readFromShm(shmADT shm, char* output);
 void freeResources(shmADT shm);
+
 #endif

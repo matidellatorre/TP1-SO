@@ -8,13 +8,12 @@ int main(int argc, const char * argv[]){
         printf("Error en los parametros");
     }
 
-    //sleep(2);
-
-    //printf("filename %s", argv[1]);
-
 
     masterADT masterOfPuppets = newMaster(argc-1,argv+1);
+
     initializeSlaves(masterOfPuppets);
+
+    sleep(2);
 
     sendInitialTask(masterOfPuppets);
 

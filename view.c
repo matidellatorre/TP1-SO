@@ -7,6 +7,9 @@
 #define MAX_LEN 50
 
 int main(int argc, char * argv[]){
+
+    sleep(2);
+
     char shmName[MAX_LEN];
     switch(argc){
         case 1:{ //La info de la shm no se pasó por argumento
@@ -29,7 +32,7 @@ int main(int argc, char * argv[]){
         }
     }
     
-    shmADT sharedMemory = newShm(shmName);
+    shmADT sharedMemory = newShm("/myshm");
     openShm(sharedMemory);
     mapShm(sharedMemory, 'r');
 
@@ -37,7 +40,6 @@ int main(int argc, char * argv[]){
     char buf[256];
     readFromShm(sharedMemory, buf);
     printf("%s\n", buf);
-
     freeResources(sharedMemory);
     return 0;
 

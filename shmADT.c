@@ -15,24 +15,25 @@
 #define SHM_SIZE 1024
 #define SHARED 0
 #define INITIAL_SEM 1
+#define NAME_SIZE 25
 
 typedef struct shmCDT{
+    char mode;
     int fd;
     size_t writeIdx, readIdx;
     sem_t sem;
     void * current;
     void * ptr; //first position in shared memory
-    char * name;
-    char mode;
+    char name[NAME_SIZE];
 }shmCDT;
 
 shmADT newShm(char* shmName){
-    shmADT newMaster = calloc(1,sizeof(shmADT));
+    shmADT newMaster = calloc(1,sizeof(shmCDT));
     if (newMaster==NULL){
         perror("newMaster");
         exit(EXIT_FAILURE);
     }
-    newMaster->name = shmName;
+    strncpy(newMaster->name,shmName,NAME_SIZE);
     return newMaster;
 }
 
@@ -56,10 +57,9 @@ void openShm(shmADT shm){
     }*/
 }
 
-//when mode is set to 1, shared memory is mapped in write mode, and read mode when 0
+//when mode is set to 'w', shared memory is mapped in write mode, and read mode when 'r'
 void mapShm(shmADT shm, char mode){
     shm->mode = mode;
-    printf("%c\n", shm->mode);
     int permission = mode=='w'?PROT_WRITE:mode=='r'?PROT_READ:PROT_NONE;
     void *res = mmap(NULL, SHM_SIZE, permission, MAP_SHARED,shm->fd, 0);
     if(res == MAP_FAILED){
@@ -71,6 +71,7 @@ void mapShm(shmADT shm, char mode){
 
 void writeToShm(shmADT shm, const char* input){
     int lenght = strlen(input);
+    printf("La longitud del write es: %d\n",strlen);
     if(shm->current==NULL){
         perror("mapShm should be called first");
         exit(EXIT_FAILURE);
@@ -78,7 +79,7 @@ void writeToShm(shmADT shm, const char* input){
     int * firstPos = (int*)shm->current;
     *firstPos = lenght;
     shm->current+=sizeof(int);
-    sprintf(shm->current, "%s", input);
+    sprintf((char *)shm->current, "%s", *input);
     shm->current+=lenght;
     return;
 }
@@ -87,17 +88,20 @@ size_t readFromShm(shmADT shm, char* output){
     size_t lenght = *((int*)shm->current);
     shm->current+=sizeof(int);
 
-    if(snprintf(*output, lenght, "%s", shm->current)<0){
+    printf("%d\n",*(int*)shm->current);
+
+    if(snprintf(*output, lenght, "%s", (char *)shm->current)<0){
         perror("sprintf");
         exit(EXIT_FAILURE);
     }
+
+    printf("%s\n",output);
 
     shm->current+=lenght;
     return lenght;
 }
 
 void freeResources(shmADT shm){
-    printf("%c\n", shm->mode);
     if(munmap(shm->ptr, SHM_SIZE)==-1){
         perror("munmap");
         exit(EXIT_FAILURE);

@@ -139,15 +139,18 @@ void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set
             int bytesRead = read(master->receivePipes[i][0], buff, MAX_LEN);
             if(bytesRead == -1){
                 perror("read");
+                exit(EXIT_FAILURE);
             }
             buff[bytesRead]='\0';
 
             if(fwrite(buff, sizeof(char),bytesRead, resultFile) == 0){
                 perror("fwrite");
+                exit(EXIT_FAILURE);
             }
 
             //Escribo lo mismo en shared memory
-            writeToShm(master->sharedMemory,buff);
+            printf("%d\n",strlen(buff));
+            writeToShm(master->sharedMemory, buff);
 
         }
         //Se puede mover, esta parte de la funcion asigna la nueva tarea

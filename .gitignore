@@ -11,3 +11,4 @@ slave
 vgcore.*
 solve
 test/script.sh
+select2.c
