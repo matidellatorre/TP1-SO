@@ -108,18 +108,18 @@ void writeToShm(shmADT shm, const char* input){
 }
 
 int readQtyShm(shmADT shm){
+    if(sem_wait(shm->sem) == -1){
+    perror("sem_wait");
+    exit(EXIT_FAILURE);
+    }
     int *firstPos = (int *)shm->current;
     int qty = *firstPos;
     shm->current+=sizeof(int);
-    if(sem_post(shm->sem)==-1){
-        perror("sem_post");
-        exit(EXIT_FAILURE);
-    }
     return qty;
 }
 
 //Lee el output de un slave a la vez (escrito por master en la SHM)
-size_t readFromShm(shmADT shm, char* output){
+int readFromShm(shmADT shm, char* output){
     if(sem_wait(shm->sem)==-1){
         perror("sem_wait");
         exit(EXIT_FAILURE);
@@ -146,15 +146,7 @@ void freeResources(shmADT shm){
         exit(EXIT_FAILURE);
     }
     if(shm->mode=='r'){
-        if(sem_unlink(SEM_NAME)==-1){
-            perror("sem_unlink");
-            exit(EXIT_FAILURE);
-        }
-        if(shm_unlink(shm->name)==-1){
-        perror("shm_unlink");
-        exit(EXIT_FAILURE);
-        }
-
+        
     }
     if(close(shm->fd)==-1){
         perror("close");
@@ -162,5 +154,39 @@ void freeResources(shmADT shm){
     }
     free(shm);
     return;
+}
+
+void closeShm(shmADT shm){
+
+  if(sem_close(shm->sem) == -1){
+    perror("semclose");
+    exit(EXIT_FAILURE);
+  }
+  if(munmap(shm->ptr,SHM_SIZE) == -1){
+    perror("munmap");
+    exit(EXIT_FAILURE);
+  }
+  if(close(shm->fd)==-1){
+    perror("close fd shm");
+    exit(EXIT_FAILURE);
+  }
+
+}
+
+void destroyShm(shmADT shm){
+
+  if(sem_unlink(SEM_NAME)==-1){
+    perror("sem_unlink");
+    exit(EXIT_FAILURE);
+  }
+  if(shm_unlink(shm->name)==-1){
+    perror("shm_unlink");
+    exit(EXIT_FAILURE); 
+  }
+
+}
+
+void freeShm(shmADT shm){
+  free(shm);
 }
 

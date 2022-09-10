@@ -18,8 +18,11 @@ int main(int argc, const char * argv[]){
     sendInitialTask(masterOfPuppets);
 
     monitorSlaves(masterOfPuppets);
+    
+    sleep(2);
 
     freeAllResources(masterOfPuppets);
 
+    freeMaster(masterOfPuppets);
     
 }

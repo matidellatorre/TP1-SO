@@ -8,8 +8,6 @@
 
 int main(int argc, char * argv[]){
 
-    sleep(2);
-
     char shmName[MAX_LEN];
     switch(argc){
         case 1:{ //La info de la shm no se pasó por argumento
@@ -32,9 +30,8 @@ int main(int argc, char * argv[]){
         }
     }
     
-    sleep(2);
 
-    shmADT sharedMemory = newShm("/myshm", 'r');
+    shmADT sharedMemory = newShm(shmName, 'r');
     openShm(sharedMemory);
     mapShm(sharedMemory);
     int filecount = readQtyShm(sharedMemory);
@@ -47,7 +44,9 @@ int main(int argc, char * argv[]){
         printf("%s\n", buf);
         filecount--;
     }
-    freeResources(sharedMemory);
+    //freeResources(sharedMemory);
+    closeShm(sharedMemory);
+    freeShm(sharedMemory);
     return 0;
 
 }

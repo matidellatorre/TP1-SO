@@ -38,7 +38,9 @@ masterADT newMaster(int filecount, const char**filenames){
     newMaster->sharedMemory = newShm(SHM_NAME, 'w');
     openShm(newMaster->sharedMemory);
     mapShm(newMaster->sharedMemory);
-    writeQtyShm(newMaster, filecount);
+    writeQtyShm(newMaster->sharedMemory, filecount);
+    setvbuf(stdout, NULL, _IONBF, 0);
+    printf("%s",SHM_NAME);
     return newMaster;
 }
 
@@ -167,8 +169,13 @@ void closePipes(masterADT master){
 }
 
 void freeAllResources(masterADT master){
+    closeShm(master->sharedMemory);
     closePipes(master);
-    freeResources(master->sharedMemory);
-    free(master);
+}
+
+void freeMaster(masterADT master){
+  destroyShm(master->sharedMemory);
+  freeShm(master->sharedMemory);
+  free(master);
 }
 

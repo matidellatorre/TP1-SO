@@ -17,4 +17,6 @@ void monitorSlaves(masterADT master);
 
 void freeAllResources(masterADT master);
 
+void freeMaster(masterADT);
+
 #endif
