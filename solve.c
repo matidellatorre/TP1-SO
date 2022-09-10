@@ -19,7 +19,6 @@ int main(int argc, const char * argv[]){
 
     monitorSlaves(masterOfPuppets);
     
-    sleep(2);
 
     freeAllResources(masterOfPuppets);
 

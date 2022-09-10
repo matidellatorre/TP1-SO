@@ -35,7 +35,6 @@ int main(int argc, char * argv[]){
     openShm(sharedMemory);
     mapShm(sharedMemory);
     int filecount = readQtyShm(sharedMemory);
-    printf("%d\n", filecount);
     
     char buf[256];
     while(filecount>0){

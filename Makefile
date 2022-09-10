@@ -22,4 +22,4 @@ $(VIEW_BINARY): shmADT.o
 	$(CC) view.o $^ -lrt -pthread -o $@ 
 
 clean: #Borro el binario, los archivos objeto y los archivos de dependencias
-	rm -rf $(BINARY) $(SLAVE_BINARY)*.o *.d 
+	rm -rf $(BINARY) $(SLAVE_BINARY) $(VIEW_BINARY) *.o *.d 
