@@ -18,8 +18,8 @@ int main(int argc, char * argv[]){
     char shmName[MAX_NAME_LEN+1];
 
     switch(argc){
-        case 1:{ //La info de la shm no se pasó por argumento
-            //Buscamos la información por el pipe contra master
+        case 1:{ //There are no arguments
+            //We get the shared memory info from the pipe
             int count=read(STDIN_FILENO, shmName, MAX_NAME_LEN);
             if(count == -1){
                 handle_error("newMaster");
@@ -27,7 +27,7 @@ int main(int argc, char * argv[]){
             shmName[count]='\0';
             break;
         }
-        case 2:{ //La info se pasó por argumento
+        case 2:{ //Shared memory info is to be read as an argument
             strncpy(shmName, argv[1], MAX_NAME_LEN);
             break;
         }

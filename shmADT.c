@@ -41,7 +41,7 @@ shmADT newShm(char* shmName, char mode){
     }
     newMaster->mode = mode;
     strncpy(newMaster->name,shmName,NAME_SIZE);
-    //abrimos el semáforo
+    //Create/Open semaphore instance
     newMaster->sem = sem_open(SEM_NAME, O_CREAT, S_IRUSR|S_IWUSR, 0);
     if(newMaster->sem == SEM_FAILED){
         handle_error("sem_open");
@@ -50,12 +50,13 @@ shmADT newShm(char* shmName, char mode){
 }
 
 void openShm(shmADT shm){
-    //creamos el shared memory object vacío
+    //Create/Open an empty shared memory object
     shm->fd = shm_open(shm->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if(shm->fd == -1){
         handle_error("shm_open");
     }
 
+    //Asing space to the shared memory object
     if(ftruncate(shm->fd, SHM_SIZE) != 0){
         handle_error("ftruncate");
     }
@@ -72,7 +73,7 @@ void mapShm(shmADT shm){
     shm->current = res;
 }
 
-//Funcion para escribir la cantidad de archivos a procesar en la primera posicion
+//Set the number of lines view must read
 void writeQtyShm(shmADT shm, int qty){
     int *firstPos = (int *)shm->current;
     *firstPos = qty;
@@ -82,7 +83,7 @@ void writeQtyShm(shmADT shm, int qty){
     }
 }
 
-//Escribe el output de un slave a la vez
+//Write one slave output per call with its size
 void writeToShm(shmADT shm, const char* input){
     int lenght = strlen(input);
     if(shm->current==NULL){
@@ -99,6 +100,7 @@ void writeToShm(shmADT shm, const char* input){
     return;
 }
 
+//Get int from the first shared memory position to know how many lines have to be read from master
 int readQtyShm(shmADT shm){
     if(sem_wait(shm->sem) == -1){
         handle_error("sem_wait");
@@ -109,7 +111,7 @@ int readQtyShm(shmADT shm){
     return qty;
 }
 
-//Lee el output de un slave a la vez (escrito por master en la SHM)
+//Read master output from one slave per call
 int readFromShm(shmADT shm, char* output){
     if(sem_wait(shm->sem)==-1){
         handle_error("sem_wait");
@@ -126,7 +128,6 @@ int readFromShm(shmADT shm, char* output){
 }
 
 void closeShm(shmADT shm){
-
   if(sem_close(shm->sem) == -1){
     handle_error("semclose");
   }
@@ -136,11 +137,10 @@ void closeShm(shmADT shm){
   if(close(shm->fd)==-1){
     handle_error("close fd shm");
   }
-
 }
 
+//Unlink shared memory object and semaphore
 void destroyShm(shmADT shm){
-
   if(sem_unlink(SEM_NAME)==-1){
     handle_error("sem_unlink");
   }
@@ -150,6 +150,7 @@ void destroyShm(shmADT shm){
 
 }
 
+//Function needed so master can free its shmADT
 void freeShm(shmADT shm){
   free(shm);
 }

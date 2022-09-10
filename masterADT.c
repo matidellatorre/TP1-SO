@@ -51,6 +51,7 @@ masterADT newMaster(int filecount, const char**filenames){
     return newMaster;
 }
 
+//fork slaves with pipe handling
 void initializeSlaves(masterADT master){
     int slaveCount = 0;
     pid_t forkRes;
@@ -95,10 +96,8 @@ void initializeSlaves(masterADT master){
 }
 
 void giveTask(int endPipe,const char * file){
-
   write(endPipe, file, strlen(file));
   write(endPipe, "\n", 1);
-  //Reemplazar por un sprintf
 }
 
 void sendInitialTask(masterADT master){
@@ -118,6 +117,7 @@ void sendInitialTask(masterADT master){
 
 }
 
+//Handle and save slave outputs
 void monitorSlaves(masterADT master){
     fd_set readFds;
     int taskFinished = 0;
@@ -141,6 +141,7 @@ void monitorSlaves(masterADT master){
     }
 }
 
+//writes slave outputs to result file, sends them to view process and asigns new tasks for slaves
 void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set readFds){
     for(int i=0; i<master->activeSlaves; i++){
         if(FD_ISSET(master->receivePipes[i][0], &readFds)){
@@ -160,7 +161,7 @@ void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set
             writeToShm(master->sharedMemory, buff);
 
         }
-        //Se puede mover, esta parte de la funcion asigna la nueva tarea
+        //asign new task to slave
         if(master->currentTask < master->filecount){
             giveTask(master->sendPipes[i][1], master->filenames[(master->currentTask)++]);
         }

@@ -3,6 +3,12 @@
 Grupo 3
 ITBA
 
+## Requerimientos
+
+Tanto para la compilación como para la linkedición es necesario conectarse primero utilizar Docker con la imagen de la cátedra de Sistemas Operativos del ITBA.
+
+Para esto primero instalar Docker. Luego bajar la imagen con el comando `docker pull agodio/itba-so:1.0` y finalmente iniciar el contenedor con `docker run -v "${PWD}:/root" --privileged -ti agodio/itba-so:1.0`.
+
 ## Intrucciones de compilación
 
 La compilación y linkedición del siguiente proyecto se realiza mediante Makefile. 

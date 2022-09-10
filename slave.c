@@ -18,11 +18,12 @@
 void printHashWithFormat(const char * hash, const char * filename);
 
 void computeHash(char * buffer, const char * filename){
-
+    //Load buffer command
     if (sprintf(buffer,"md5sum %s",filename)<0){
         handle_error("sprintf");
     }
 
+    //Run buffer command from terminal and leaves output in the buffer
     FILE * file;
     if ((file = popen(buffer,"r")) == NULL){
         handle_error("popen");
