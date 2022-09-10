@@ -19,7 +19,7 @@ $(SLAVE_BINARY): slave.c #FALTA AGREGAR EL FLAG STD-C99
 
 $(VIEW_BINARY): shmADT.o
 	$(CC) $(CFLAGS) -c view.c 
-	$(CC) view.o $^ -lrt -o $@ 
+	$(CC) view.o $^ -lrt -pthread -o $@ 
 
 clean: #Borro el binario, los archivos objeto y los archivos de dependencias
 	rm -rf $(BINARY) $(SLAVE_BINARY)*.o *.d 

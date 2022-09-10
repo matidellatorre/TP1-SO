@@ -38,6 +38,7 @@ masterADT newMaster(int filecount, const char**filenames){
     newMaster->sharedMemory = newShm(SHM_NAME, 'w');
     openShm(newMaster->sharedMemory);
     mapShm(newMaster->sharedMemory);
+    writeQtyShm(newMaster, filecount);
     return newMaster;
 }
 

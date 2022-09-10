@@ -32,15 +32,22 @@ int main(int argc, char * argv[]){
         }
     }
     
+    sleep(2);
+
     shmADT sharedMemory = newShm("/myshm", 'r');
     openShm(sharedMemory);
     mapShm(sharedMemory);
-
-    sleep(2);
+    int filecount = readQtyShm(sharedMemory);
+    printf("%d\n", filecount);
+    
     char buf[256];
-    readFromShm(sharedMemory, buf);
-    printf("%s\n", buf);
-    //freeResources(sharedMemory);
+    while(filecount>0){
+        memset(buf, 0, 256); //Clear the array before reading
+        readFromShm(sharedMemory, buf);
+        printf("%s\n", buf);
+        filecount--;
+    }
+    freeResources(sharedMemory);
     return 0;
 
 }
