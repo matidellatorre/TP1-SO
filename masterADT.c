@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <stdio.h>
 #include <unistd.h>
@@ -13,6 +15,11 @@
 #define ANS_PATH "./result.txt"
 #define MAX_LEN 256
 #define MAX_FILES_PER_SLAVE 2
+#define WRITE_MODE 'w' 
+
+#define handle_error(msg) \
+           do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 
 typedef struct masterCDT {
     int filecount;
@@ -31,11 +38,11 @@ void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set
 masterADT newMaster(int filecount, const char**filenames){
     masterADT newMaster = calloc(1,sizeof(masterCDT));
     if (newMaster==NULL){
-        perror("calloc");
+        handle_error("calloc");
     }
     newMaster->filecount = filecount;
     newMaster->filenames = filenames;
-    newMaster->sharedMemory = newShm(SHM_NAME, 'w');
+    newMaster->sharedMemory = newShm(SHM_NAME, WRITE_MODE);
     openShm(newMaster->sharedMemory);
     mapShm(newMaster->sharedMemory);
     writeQtyShm(newMaster->sharedMemory, filecount);
@@ -52,9 +59,9 @@ void initializeSlaves(masterADT master){
         pipe(master->receivePipes[slaveCount]);
 
         if ((forkRes=fork())<0){
-            perror("fork");
+            handle_error("fork");
         } else if(forkRes==0){
-            //Hijo
+            
             for (int i = 0; i < slaveCount; i++) {
               close(master->sendPipes[slaveCount][1]);
               close(master->receivePipes[slaveCount][0]);
@@ -73,7 +80,7 @@ void initializeSlaves(masterADT master){
             char * args[] = {"slave",NULL};
             execv(args[0],args);
 
-            perror("execv");            
+            handle_error("execv");           
       
         } else {
             master->slavePids[slaveCount]=forkRes;
@@ -91,10 +98,11 @@ void giveTask(int endPipe,const char * file){
 
   write(endPipe, file, strlen(file));
   write(endPipe, "\n", 1);
-
+  //Reemplazar por un sprintf
 }
 
 void sendInitialTask(masterADT master){
+
   int taskNum = 0;
 
   for(int i = 0; i < master->activeSlaves;i++){
@@ -113,9 +121,9 @@ void sendInitialTask(masterADT master){
 void monitorSlaves(masterADT master){
     fd_set readFds;
     int taskFinished = 0;
-    FILE * resultsFile = fopen(ANS_PATH,"w"); //Chusmear el w
+    FILE * resultsFile = fopen(ANS_PATH,"w");
     if (resultsFile==NULL){
-        perror("fopen");
+        handle_error("fopen");
     }
     while(taskFinished<master->filecount){
         FD_ZERO(&readFds);
@@ -123,13 +131,13 @@ void monitorSlaves(masterADT master){
             FD_SET(master->receivePipes[i][0],&readFds);
         }
         if(select(master->receivePipes[master->activeSlaves-1][0]+1,&readFds,NULL,NULL,NULL) == -1){
-            perror("select");
+            handle_error("select");
         } else {
             manageResult(master, &taskFinished, resultsFile, readFds);
         }
     }
     if(fclose(resultsFile) == EOF){
-        perror("fclose");
+        handle_error("fclose");
     }
 }
 
@@ -137,17 +145,15 @@ void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set
     for(int i=0; i<master->activeSlaves; i++){
         if(FD_ISSET(master->receivePipes[i][0], &readFds)){
             (*taskFinished)++;
-            char buff[MAX_LEN];
+            char buff[MAX_LEN+1];
             int bytesRead = read(master->receivePipes[i][0], buff, MAX_LEN);
             if(bytesRead == -1){
-                perror("read");
-                exit(EXIT_FAILURE);
+                handle_error("read");
             }
             buff[bytesRead]='\0';
 
             if(fwrite(buff, sizeof(char),bytesRead, resultFile) == 0){
-                perror("fwrite");
-                exit(EXIT_FAILURE);
+                handle_error("fwrite");
             }
 
             //Escribo lo mismo en shared memory

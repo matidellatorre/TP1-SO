@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -9,30 +11,29 @@
 #define HASH_LEN 33
 #define MAX_LEN 256
 
+#define handle_error(msg) \
+           do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 
 void printHashWithFormat(const char * hash, const char * filename);
 
 void computeHash(char * buffer, const char * filename){
 
     if (sprintf(buffer,"md5sum %s",filename)<0){
-        perror("sprintf");
+        handle_error("sprintf");
     }
 
     FILE * file;
     if ((file = popen(buffer,"r")) == NULL){
-        perror("popen");
-        // Hay que hacer algo aca, a decidir
+        handle_error("popen");
     }
     
     fread(buffer, sizeof(char),MAX_LEN,file);
 
     buffer[HASH_LEN-1]=0;
-
-    //e9aea3571d18e099b6295afd19487489
     
     if (pclose(file) == -1){
-        perror("pclose");
-        //Posible exit, a decidir. Capaz no vale pena seguir procesando archivos.
+        handle_error("pclose");
     }
 
 }
@@ -58,7 +59,7 @@ void printHashWithFormat(const char * hash, const char * filename){
     int resultLen;
     resultLen = sprintf(resultToPrint,"File: %s Hash: %s Slave PID: %d\n",filename,hash,pid);
     if (resultLen<0){
-        perror("sprintf");
+        handle_error("sprintf");
     }
     write(STDOUT_FILENO,resultToPrint,resultLen);
 }

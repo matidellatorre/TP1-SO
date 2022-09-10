@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -17,6 +19,11 @@
 #define INITIAL_SEM 1
 #define NAME_SIZE 25
 #define SEM_NAME "/mysem"
+#define READ_MODE 'r'
+#define WRITE_MODE 'w'
+
+#define handle_error(msg) \
+           do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 typedef struct shmCDT{
     char mode;
@@ -30,16 +37,14 @@ typedef struct shmCDT{
 shmADT newShm(char* shmName, char mode){
     shmADT newMaster = calloc(1,sizeof(shmCDT));
     if (newMaster==NULL){
-        perror("newMaster");
-        exit(EXIT_FAILURE);
+        handle_error("newMaster");
     }
     newMaster->mode = mode;
     strncpy(newMaster->name,shmName,NAME_SIZE);
     //abrimos el semáforo
     newMaster->sem = sem_open(SEM_NAME, O_CREAT, S_IRUSR|S_IWUSR, 0);
     if(newMaster->sem == SEM_FAILED){
-        perror("sem_open");
-        exit(EXIT_FAILURE);
+        handle_error("sem_open");
     }
     return newMaster;
 }
@@ -48,27 +53,17 @@ void openShm(shmADT shm){
     //creamos el shared memory object vacío
     shm->fd = shm_open(shm->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if(shm->fd == -1){
-        perror("shm_open");
-        exit(EXIT_FAILURE);
+        handle_error("shm_open");
     }
 
-    //le asignamos tamaño de memoria
-    //if(shm->mode=='w'){
-        if(ftruncate(shm->fd, SHM_SIZE) != 0){
-            perror("ftruncate");
-            exit(EXIT_FAILURE);
-        }
-    //}
-
-    /*if(sem_init(&(shm->sem), SHARED, INITIAL_SEM) == -1){
-        perror("sem_init");
-        exit(EXIT_FAILURE);
-    }*/
+    if(ftruncate(shm->fd, SHM_SIZE) != 0){
+        handle_error("ftruncate");
+    }
 }
 
 //when mode is set to 'w', shared memory is mapped in write mode, and read mode when 'r'
 void mapShm(shmADT shm){
-    int permission = shm->mode=='w'?PROT_WRITE:shm->mode=='r'?PROT_READ:PROT_NONE;
+    int permission = shm->mode==WRITE_MODE?PROT_WRITE:shm->mode==READ_MODE?PROT_READ:PROT_NONE;
     void *res = mmap(NULL, SHM_SIZE, permission, MAP_SHARED,shm->fd, 0);
     if(res == MAP_FAILED){
         perror("mmap");
@@ -83,8 +78,7 @@ void writeQtyShm(shmADT shm, int qty){
     *firstPos = qty;
     shm->current+=sizeof(int);
     if(sem_post(shm->sem)==-1){
-        perror("sem_post");
-        exit(EXIT_FAILURE);
+        handle_error("sem_post");
     }
 }
 
@@ -92,8 +86,7 @@ void writeQtyShm(shmADT shm, int qty){
 void writeToShm(shmADT shm, const char* input){
     int lenght = strlen(input);
     if(shm->current==NULL){
-        perror("mapShm should be called first");
-        exit(EXIT_FAILURE);
+        handle_error("mapShm should be called first");
     }
     int *firstPos = (int *)shm->current;
     *firstPos = lenght;
@@ -101,16 +94,14 @@ void writeToShm(shmADT shm, const char* input){
     sprintf(shm->current, "%s", input);
     shm->current+=lenght;
     if(sem_post(shm->sem)==-1){
-        perror("sem_post");
-        exit(EXIT_FAILURE);
+        handle_error("sem_post");
     }
     return;
 }
 
 int readQtyShm(shmADT shm){
     if(sem_wait(shm->sem) == -1){
-    perror("sem_wait");
-    exit(EXIT_FAILURE);
+        handle_error("sem_wait");
     }
     int *firstPos = (int *)shm->current;
     int qty = *firstPos;
@@ -121,54 +112,29 @@ int readQtyShm(shmADT shm){
 //Lee el output de un slave a la vez (escrito por master en la SHM)
 int readFromShm(shmADT shm, char* output){
     if(sem_wait(shm->sem)==-1){
-        perror("sem_wait");
-        exit(EXIT_FAILURE);
+        handle_error("sem_wait");
     }
     size_t lenght = *((int*)shm->current);
     shm->current+=sizeof(int);
 
     if(snprintf(output, lenght, "%s", (char *)shm->current)<0){
-        perror("sprintf");
-        exit(EXIT_FAILURE);
+        handle_error("sprintf");
     }
 
     shm->current+=lenght;
     return lenght;
 }
 
-void freeResources(shmADT shm){
-    if(sem_close(shm->sem)==-1){
-        perror("close");
-        exit(EXIT_FAILURE);
-    }
-    if(munmap(shm->ptr, SHM_SIZE)==-1){
-        perror("munmap");
-        exit(EXIT_FAILURE);
-    }
-    if(shm->mode=='r'){
-        
-    }
-    if(close(shm->fd)==-1){
-        perror("close");
-        exit(EXIT_FAILURE);
-    }
-    free(shm);
-    return;
-}
-
 void closeShm(shmADT shm){
 
   if(sem_close(shm->sem) == -1){
-    perror("semclose");
-    exit(EXIT_FAILURE);
+    handle_error("semclose");
   }
   if(munmap(shm->ptr,SHM_SIZE) == -1){
-    perror("munmap");
-    exit(EXIT_FAILURE);
+    handle_error("munmap");
   }
   if(close(shm->fd)==-1){
-    perror("close fd shm");
-    exit(EXIT_FAILURE);
+    handle_error("close fd shm");
   }
 
 }
@@ -176,12 +142,10 @@ void closeShm(shmADT shm){
 void destroyShm(shmADT shm){
 
   if(sem_unlink(SEM_NAME)==-1){
-    perror("sem_unlink");
-    exit(EXIT_FAILURE);
+    handle_error("sem_unlink");
   }
   if(shm_unlink(shm->name)==-1){
-    perror("shm_unlink");
-    exit(EXIT_FAILURE); 
+    handle_error("shm_unlink");
   }
 
 }
