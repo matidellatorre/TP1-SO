@@ -157,6 +157,8 @@ void manageResult(masterADT master, int *taskFinished, FILE * resultFile, fd_set
                 handle_error("fwrite");
             }
 
+            writeToPipe(master->sharedMemory, buff);
+
             //Escribo lo mismo en shared memory
             writeToShm(master->sharedMemory, buff);
 

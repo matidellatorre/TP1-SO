@@ -15,5 +15,7 @@ void freeResources(shmADT shm);
 void closeShm(shmADT);
 void freeShm(shmADT);
 void destroyShm(shmADT);
+void writeToPipe(shmADT shm, const char* buf);
+void readFromPipe(shmADT shm, char*);
 
 #endif

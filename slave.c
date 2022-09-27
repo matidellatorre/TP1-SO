@@ -36,7 +36,6 @@ void computeHash(char * buffer, const char * filename){
     if (pclose(file) == -1){
         handle_error("pclose");
     }
-
 }
 
 int main(int argc, char * argv[]){

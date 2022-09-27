@@ -36,22 +36,22 @@ int main(int argc, char * argv[]){
             exit(EXIT_FAILURE);
         }
     }
-    
+
+    printf("corrio view\n");
 
     shmADT sharedMemory = newShm(shmName, READ_MODE);
     openShm(sharedMemory);
     mapShm(sharedMemory);
     int filecount = readQtyShm(sharedMemory);
-    
     char buf[MAX_LEN];
     while(filecount>0){
         memset(buf, 0, MAX_LEN); //Clear the array before reading
-        readFromShm(sharedMemory, buf);
+        //readFromShm(sharedMemory, buf);
+        readFromPipe(sharedMemory, buf);
         printf("%s\n", buf);
         filecount--;
     }
     closeShm(sharedMemory);
     freeShm(sharedMemory);
     return 0;
-
 }
